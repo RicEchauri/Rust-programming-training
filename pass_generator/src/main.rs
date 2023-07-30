@@ -10,35 +10,40 @@ fn pass_generator()
 {
     println!("Welcom to your password generator!");
     let mut password = String::new();
-    let secutiry_level = ask_security_level();
+    let secutiry_level = ask_password_options();
 
-    for index in 0..secutiry_level.length
+    for _index in 0..secutiry_level.length
     {
         let random_char = generate_rand_char(&secutiry_level);
         let character = from_u32(random_char).expect("invalid");
         password.push(character);
     }
-    println!("{}", password);
+    println!("Your password is: {}", password);
 }
 
-fn ask_security_level() -> Options
+fn ask_password_options() -> Options
 {
     
     let mut user_option = Options
     {
         length: get_u32_from_stdin("How many length do you want for your password?"),
-        uppercase: get_answerd_from_stdin("Do you want uppercase? \n a) Yes \n b) No"),
-        lowercase: get_answerd_from_stdin("Do you want lowercase? \n a) Yes \n b) No"),
-        numbers: get_answerd_from_stdin("Do you want numbers? \n a) Yes \n b) No"),
-        symbols: get_answerd_from_stdin("Do you want symbols? \n a) Yes \n b) No"),
+        uppercase: get_answerd_from_stdin("Do you want uppercase? \n a) Yes \n b) No") << 3,
+        lowercase: get_answerd_from_stdin("Do you want lowercase? \n a) Yes \n b) No") << 2,
+        numbers: get_answerd_from_stdin("Do you want numbers? \n a) Yes \n b) No") << 1,
+        symbols: get_answerd_from_stdin("Do you want symbols? \n a) Yes \n b) No") << 0,
+        result: 0,
     };
-    while user_option.uppercase == 'b' && user_option.lowercase == 'b' && user_option.numbers == 'b' && user_option.symbols == 'b'
+
+    user_option.result = user_option.uppercase | user_option.lowercase | user_option.numbers | user_option.symbols;
+
+    while user_option.result == 0
     {
         println!("Please select at least one option");
         user_option.uppercase = get_answerd_from_stdin("Do you want uppercase? \n a) Yes \n b) No");
         user_option.lowercase = get_answerd_from_stdin("Do you want lowercase? \n a) Yes \n b) No");
         user_option.numbers = get_answerd_from_stdin("Do you want numbers? \n a) Yes \n b) No");
         user_option.symbols = get_answerd_from_stdin("Do you want symbols? \n a) Yes \n b) No");
+        user_option.result = user_option.uppercase | user_option.lowercase | user_option.numbers | user_option.symbols;
         continue;
     }
     
@@ -47,10 +52,11 @@ fn ask_security_level() -> Options
 
 struct Options {
     length: u32,
-    uppercase: char,
-    lowercase: char,
-    numbers: char,
-    symbols: char,
+    uppercase: u8,
+    lowercase: u8,
+    numbers: u8,
+    symbols: u8,
+    result: u8,
 }
 
 fn get_u32_from_stdin(question: &str) -> u32
@@ -85,52 +91,29 @@ fn get_u32_from_stdin(question: &str) -> u32
     return result;
 }
 
-fn get_answerd_from_stdin(question: &str) -> char
+fn get_answerd_from_stdin(question: &str) -> u8
 {
     println!("{}", question);
-    let mut result: char;
+    let mut result: u8;
     loop 
     {
         let mut user_input = String::new();
         io::stdin().read_line(&mut user_input).expect("Failed to read line");
         
-        match user_input.trim()
+        if user_input.trim() == "a" || user_input.trim() == "yes" || user_input.trim() == "y"
         {
-            "a" => 
-            {
-                result = 'a';
-                break;
-            },
-            "yes" => 
-            {
-                result = 'a';
-                break;
-            },
-            "y" => 
-            {
-                result = 'a';
-                break;
-            },
-            "b" =>
-            {
-                result = 'b';
-                break;
-            },
-            "no" =>
-            {
-                result = 'b';
-                break;
-            },
-            "n" =>
-            {
-                result = 'b';
-                break;
-            },
-            _ =>
-            {
-                println!("Please input a valid answerd");
-                continue;
-            }
+            result = 1;
+            break;
+        } 
+        else if user_input.trim() == "b" || user_input.trim() == "no" || user_input == "n"
+        {
+            result = 0;
+            break;
+        }
+        else 
+        {
+            println!("Please input a valid answerd");
+            continue;
         }
     }
     
@@ -140,19 +123,19 @@ fn get_answerd_from_stdin(question: &str) -> char
 fn generate_rand_char(user_input:&Options) -> u32
 {
     let mut random_char = 0;
-    if user_input.uppercase == 'a' && user_input.lowercase == 'b' && user_input.numbers == 'b' && user_input.symbols == 'b'
+    if user_input.result == 0b1000
     {
         random_char = thread_rng().gen_range(0x41..=0x5A);
     }
-    else if user_input.uppercase == 'b' && user_input.lowercase == 'a' && user_input.numbers == 'b' && user_input.symbols == 'b'
+    else if user_input.result == 0b0100
     {
         random_char = thread_rng().gen_range(0x61..=0x7A);
     }
-    else if user_input.uppercase == 'b' && user_input.lowercase == 'b' && user_input.numbers == 'a' && user_input.symbols == 'b'
+    else if user_input.result == 0b0010
     {
         random_char = thread_rng().gen_range(0x30..=0x39);
     }
-    else if user_input.uppercase == 'b' && user_input.lowercase == 'b' && user_input.numbers == 'b' && user_input.symbols == 'a'
+    else if user_input.result == 0b0001
     {
         
         random_char = thread_rng().gen_range(0x5B..=0x7E);
@@ -162,7 +145,7 @@ fn generate_rand_char(user_input:&Options) -> u32
         }
         
     }
-    else if user_input.uppercase == 'a' && user_input.lowercase == 'a' && user_input.numbers == 'b' && user_input.symbols == 'b'
+    else if user_input.result == 0b1100
     {
         random_char = thread_rng().gen_range(0x41..=0x7A);
         while random_char > 0x5A && random_char < 0x61
@@ -170,7 +153,7 @@ fn generate_rand_char(user_input:&Options) -> u32
             random_char = thread_rng().gen_range(0x41..=0x7A);
         }
     }
-    else if user_input.uppercase == 'a' && user_input.lowercase == 'b' && user_input.numbers == 'a' && user_input.symbols == 'b'
+    else if user_input.result == 0b1010
     {
         random_char = thread_rng().gen_range(0x30..=0x5A);
         while random_char > 0x39 && random_char < 0x41
@@ -178,7 +161,7 @@ fn generate_rand_char(user_input:&Options) -> u32
             random_char = thread_rng().gen_range(0x30..=0x5A);
         }
     }
-    else if user_input.uppercase == 'a' && user_input.lowercase == 'b' && user_input.numbers == 'b' && user_input.symbols == 'a'
+    else if user_input.result == 0b1001
     {
         random_char = thread_rng().gen_range(0x3A..=0x7E);
         while random_char > 0x60 && random_char < 0x7B
@@ -186,7 +169,7 @@ fn generate_rand_char(user_input:&Options) -> u32
             random_char = thread_rng().gen_range(0x30..=0x5A);
         }
     }
-    else if user_input.uppercase == 'b' && user_input.lowercase == 'a' && user_input.numbers == 'a' && user_input.symbols == 'b'
+    else if user_input.result == 0b0110
     {
         random_char = thread_rng().gen_range(0x30..=0x7A);
         while random_char > 0x39 && random_char < 0x61
@@ -194,7 +177,7 @@ fn generate_rand_char(user_input:&Options) -> u32
             random_char = thread_rng().gen_range(0x30..=0x7A);
         }
     }
-    else if user_input.uppercase == 'b' && user_input.lowercase == 'a' && user_input.numbers == 'b' && user_input.symbols == 'a'
+    else if user_input.result == 0b0101
     {
         random_char = thread_rng().gen_range(0x3A..=0x7E);
         while random_char > 0x40 && random_char < 0x5A
@@ -202,7 +185,7 @@ fn generate_rand_char(user_input:&Options) -> u32
             random_char = thread_rng().gen_range(0x3A..=0x7E);
         }
     }
-    else if user_input.uppercase == 'b' && user_input.lowercase == 'b' && user_input.numbers == 'a' && user_input.symbols == 'a'
+    else if user_input.result == 0b0011
     {
         random_char = thread_rng().gen_range(0x30..=0x7E);
         while random_char > 0x40 && random_char < 0x5A || random_char > 0x60 && random_char < 0x7B
